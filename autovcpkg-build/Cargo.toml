@@ -4,6 +4,10 @@ version = "0.1.2019-10"
 authors = ["Danny Angelo Carminati Grein <fungos@gmail.com>"]
 edition = "2018"
 
+[dependencies]
+vcpkg = "0.2.7"
+#path = "../vcpkg-rs/vcpkg"
+
 [features]
 3fd = []
 7zip = []

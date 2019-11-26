@@ -17,5 +17,5 @@ fn main() {
         .build_target("shim")
         .build();
 
-   autovcpkg_build::finish(&cfg);
+    //autovcpkg_build::finish(&cfg);
 }
