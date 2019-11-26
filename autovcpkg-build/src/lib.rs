@@ -1,3 +1,4 @@
+extern crate vcpkg;
 use std::path::PathBuf;
 use std::env;
 use std::fs;
@@ -12,8 +13,17 @@ pub fn vcpkg_triplet() -> String {
         "x86_64" => "x64",
         _ => "x86", // FIXME
     }.to_owned();
-    let family = env::var("CARGO_CFG_TARGET_FAMILY").unwrap();
+    let family = env::var("CARGO_CFG_TARGET_OS").unwrap();
     arch + "-" + &family
+}
+
+pub fn vcpkg_rs_triplet() -> String {
+    match &*vcpkg_triplet() {
+        "x64-windows" => "x86_64-pc-windows-msvc",
+        "x64-linux" => "x86_64-unknown-linux-gnu",
+        "x64-osx" => "x86_64-apple-darwin",
+        forward => forward,
+    }.into()
 }
 
 pub fn build_root() -> PathBuf {
@@ -25,12 +35,23 @@ pub fn build_root() -> PathBuf {
 }
 
 pub fn vcpkg_root() -> String {
+    // if we have VCPKG_ROOT, pass it as AUTO_VCPKG_ROOT too
+    if let Ok(path) = env::var("VCPKG_ROOT") {
+        env::set_var("AUTO_VCPKG_ROOT", path.clone());
+        return path;
+    }
+
     let mut out = build_root();
     out.push(".."); // debug|release
     out.push("vcpkg");
-    env::var("AUTO_VCPKG_ROOT").unwrap_or_else(|_|
+    let path = env::var("AUTO_VCPKG_ROOT").unwrap_or_else(|_|
         format!("{}", out.display())
-    )
+    );
+
+    // if we didn't have VCPKG_ROOT, we need now to pass to vcpkg-rs
+    // would be better be able to give this via vcpkg::Configure
+    env::set_var("VCPKG_ROOT", path.clone());
+    path
 }
 
 pub fn prepare() -> Config {
@@ -53,35 +74,42 @@ pub fn prepare() -> Config {
     }
 }
 
-// HACK: temporary hack to validate theory
-// FIXME: make cmake find_package and automatically extract a list of all
-// libs needed
-pub fn package_libs(package: &str) -> Vec<&str> {
-    match package {
-        "curl" => vec!["libcurl"],
-        "gtk" => vec!["gtk-3.0"],
-        _ => vec![package],
-    }
-}
-
 pub fn finish(cfg: &Config) {
-    let mut root = PathBuf::from(&cfg.root);
-    root.push("installed");
-    root.push(vcpkg_triplet());
-    let mut lib = root.clone();
-    lib.push("lib");
-
+    //let mut root = PathBuf::from(&cfg.root);
+    //root.push("installed");
+    //root.push(vcpkg_triplet());
+    //let mut lib = root.clone();
+    //lib.push("lib");
     println!("cargo:rustc-env=AUTO_VCPKG_GIT_TAG=2019.10");
-    println!("cargo:rustc-link-search=native={}", lib.display());
-    // FIXME: manual-link libs
+    //println!("cargo:rustc-link-search=native={}", lib.display());
     for pkg in &cfg.packages {
-        if pkg != "" {
-            let libs = package_libs(pkg);
-            for lib in libs {
-                println!("cargo:rustc-link-lib=static={}", lib);
+        if pkg == "" {
+            continue;
+        }
+        match vcpkg::find_package(pkg) {
+            Ok(lib) => {
+                for line in &lib.cargo_metadata {
+                    //libs.insert(line.clone());
+                    println!("{}", line);
+                }
+            },
+            Err(err) => {
+                println!("# Failed: {}", err);
             }
         }
     }
+    
+    //
+    // Well, unfortunatelly we can't pass groups to linker, and some libs ordering is 
+    // important.
+    // Hack these here until we find a solution:
+    //
+    // vcpkg-rs gives: curl,crypto,ssl
+    // curl needs: curl,ssl,crypto
+    if cfg.packages.contains(&"curl".to_string()) {
+        println!("cargo:rustc-link-lib=crypto");
+    }
+
     // DEBUG to view env vars that we have access to
     /*for (key, val) in env::vars() {
         println!("# {} = {}", key, val);
@@ -93,9 +121,10 @@ pub fn configure(packages: &[&str]) {
     for &pkg in packages.iter() {
         cfg.packages.push(pkg.to_owned());
     }
-    finish(&cfg)
+    finish(&cfg);
 }
 
+/*
 pub fn install(files: &[&str]) {
     let mut bin = PathBuf::from(vcpkg_root());
     bin.push("installed");
@@ -111,6 +140,7 @@ pub fn install(files: &[&str]) {
         fs::copy(src, dst).unwrap();
     }
 }
+*/
 
 pub fn lib_fixup(files: &[(&str, &str)]) {
     let mut lib = PathBuf::from(vcpkg_root());
