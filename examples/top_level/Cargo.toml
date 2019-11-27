@@ -1,0 +1,17 @@
+[package]
+name = "top_level"
+version = "0.1.0"
+authors = ["Danny Angelo Carminati Grein <fungos@gmail.com>"]
+edition = "2018"
+
+[dependencies.zlib_vcpkg]
+path = "../zlib_vcpkg"
+version = "0.1"
+
+[dependencies.curl_vcpkg]
+path = "../curl_vcpkg"
+version = "0.1"
+
+[build-dependencies.autovcpkg-build]
+path = "../../autovcpkg-build"
+version = "0.1.2019-10"
