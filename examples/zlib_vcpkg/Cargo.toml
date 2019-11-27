@@ -1,0 +1,10 @@
+[package]
+name = "zlib_vcpkg"
+version = "0.1.0"
+authors = ["Danny Angelo Carminati Grein <fungos@gmail.com>"]
+edition = "2018"
+
+[dependencies.autovcpkg]
+path = "../../autovcpkg"
+version = "0.1.2019-10"
+features = ["zlib"]

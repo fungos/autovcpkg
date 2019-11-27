@@ -1,0 +1,28 @@
+[package]
+authors = ["Antoni Boucher <bouanto@zoho.com>"]
+categories = ["asynchronous", "gui"]
+description = "Examples for relm"
+license = "MIT"
+name = "relm-test"
+version = "0.18.0"
+edition = "2018"
+
+[dependencies]
+chrono = "0.4"
+gdk = "^0.11.0"
+glib = "^0.8.0"
+gtk = "^0.7.0"
+gtk-test = "^0.4"
+gio = "^0.7.0"
+rand = "^0.5.1"
+relm = "^0.18.0"
+relm-derive = "^0.18.0"
+
+[dependencies.autovcpkg]
+path = "../../autovcpkg"
+version = "0.1.2019-10"
+features = ["gtk"]
+
+[build-dependencies.autovcpkg-build]
+path = "../../autovcpkg-build"
+version = "0.1.2019-10"

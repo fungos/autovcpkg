@@ -1,7 +1,7 @@
 extern crate vcpkg;
-use std::path::PathBuf;
 use std::env;
 use std::fs;
+use std::path::PathBuf;
 
 pub struct Config {
     pub root: String,
@@ -12,7 +12,8 @@ pub fn vcpkg_triplet() -> String {
     let arch = match &*env::var("CARGO_CFG_TARGET_ARCH").unwrap() {
         "x86_64" => "x64",
         _ => "x86", // FIXME
-    }.to_owned();
+    }
+    .to_owned();
     let family = env::var("CARGO_CFG_TARGET_OS").unwrap();
     arch + "-" + &family
 }
@@ -23,7 +24,8 @@ pub fn vcpkg_rs_triplet() -> String {
         "x64-linux" => "x86_64-unknown-linux-gnu",
         "x64-osx" => "x86_64-apple-darwin",
         forward => forward,
-    }.into()
+    }
+    .into()
 }
 
 pub fn build_root() -> PathBuf {
@@ -35,6 +37,9 @@ pub fn build_root() -> PathBuf {
 }
 
 pub fn vcpkg_root() -> String {
+    #[cfg(target_os = "windows")]
+    env::set_var("VCPKGRS_DYNAMIC", "1");
+
     // if we have VCPKG_ROOT, pass it as AUTO_VCPKG_ROOT too
     if let Ok(path) = env::var("VCPKG_ROOT") {
         env::set_var("AUTO_VCPKG_ROOT", path.clone());
@@ -44,9 +49,7 @@ pub fn vcpkg_root() -> String {
     let mut out = build_root();
     out.push(".."); // debug|release
     out.push("vcpkg");
-    let path = env::var("AUTO_VCPKG_ROOT").unwrap_or_else(|_|
-        format!("{}", out.display())
-    );
+    let path = env::var("AUTO_VCPKG_ROOT").unwrap_or_else(|_| format!("{}", out.display()));
 
     // if we didn't have VCPKG_ROOT, we need now to pass to vcpkg-rs
     // would be better be able to give this via vcpkg::Configure
@@ -55,22 +58,30 @@ pub fn vcpkg_root() -> String {
 }
 
 pub fn prepare() -> Config {
-    let vcpkg_packages = env::var("AUTO_VCPKG_PACKAGES").unwrap_or_else(|_|
-        "".into() // crc32c for testing
+    let vcpkg_packages = env::var("AUTO_VCPKG_PACKAGES").unwrap_or_else(
+        |_| "".into(), // crc32c for testing
     );
     let mut feature_packages = Vec::new();
     for (key, _) in env::vars() {
         if key.starts_with("CARGO_FEATURE_") {
-            let pkg = key.to_string().trim_start_matches("CARGO_FEATURE_").to_string().to_lowercase().replace("_", "-");
+            let pkg = key
+                .to_string()
+                .trim_start_matches("CARGO_FEATURE_")
+                .to_string()
+                .to_lowercase()
+                .replace("_", "-");
             feature_packages.push(pkg);
         }
     }
-    let mut packages = vcpkg_packages.split(";").map(|s| s.to_string()).collect::<Vec<String>>();
+    let mut packages = vcpkg_packages
+        .split(";")
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
     packages.append(&mut feature_packages);
 
     Config {
         root: vcpkg_root(),
-        packages
+        packages,
     }
 }
 
@@ -92,21 +103,21 @@ pub fn finish(cfg: &Config) {
                     //libs.insert(line.clone());
                     println!("{}", line);
                 }
-            },
+            }
             Err(err) => {
                 println!("# Failed: {}", err);
             }
         }
     }
-    
     //
-    // Well, unfortunatelly we can't pass groups to linker, and some libs ordering is 
+    // Well, unfortunatelly we can't pass groups to linker, and some libs ordering is
     // important.
     // Hack these here until we find a solution:
     //
     // vcpkg-rs gives: curl,crypto,ssl
     // curl needs: curl,ssl,crypto
     if cfg.packages.contains(&"curl".to_string()) {
+        #[cfg(not(target_os = "windows"))]
         println!("cargo:rustc-link-lib=crypto");
     }
 
