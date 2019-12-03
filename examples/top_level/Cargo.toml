@@ -12,6 +12,6 @@ version = "0.1"
 path = "../curl_vcpkg"
 version = "0.1"
 
-[build-dependencies.autovcpkg-build]
-path = "../../autovcpkg-build"
+[build-dependencies.autovcpkg]
+path = "../../autovcpkg"
 version = "0.1.2019-10"

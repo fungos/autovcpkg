@@ -1,4 +1,4 @@
-use autovcpkg_build;
+use autovcpkg;
 fn main() {
-    autovcpkg_build::configure(&["curl", "zlib"]);
+    autovcpkg::configure(&["curl", "zlib"]);
 }

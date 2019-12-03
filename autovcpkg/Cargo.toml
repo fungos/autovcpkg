@@ -4,6 +4,12 @@ version = "0.1.2019-10"
 authors = ["Danny Angelo Carminati Grein <fungos@gmail.com>"]
 edition = "2018"
 
+[dependencies]
+vcpkg = "0.2.7"
+
+[build-dependencies]
+cmake = "0.1"
+
 [features]
 3fd = []
 7zip = []
@@ -1255,10 +1261,3 @@ zxing-cpp = []
 zydis = []
 zyre = []
 zziplib = []
-
-[build-dependencies]
-cmake = "0.1"
-
-[build-dependencies.autovcpkg-build]
-path = "../autovcpkg-build"
-version = "0.1.2019-10"

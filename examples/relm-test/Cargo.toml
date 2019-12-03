@@ -23,6 +23,6 @@ path = "../../autovcpkg"
 version = "0.1.2019-10"
 features = ["gtk"]
 
-[build-dependencies.autovcpkg-build]
-path = "../../autovcpkg-build"
+[build-dependencies.autovcpkg]
+path = "../../autovcpkg"
 version = "0.1.2019-10"
